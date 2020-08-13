@@ -26,7 +26,8 @@
 # Files and directories
 # ------------------------------------------------------------------------------
 
-TOOLCHAIN_PATH ?= /usr/local/arm/
+
+
 
 PGM_INTERFACE ?= stlink-v2
 # PGM_INTERFACE ?= ftdi/olimex-arm-jtag-swd
@@ -51,8 +52,29 @@ STM32_PATH     = stmlib/third_party/STM
 
 # --- Do not modify anything below this point ----------------------------------
 
-BUILD_ROOT     = build/
-BUILD_DIR      = $(BUILD_ROOT)$(TARGET)/
+
+
+ifeq ($(COMPILER),clang)
+
+TOOLCHAIN_PATH ?= /opt/clang-12/
+BUILD_ROOT     = build-clang/
+
+CC             = $(TOOLCHAIN_BIN)clang
+CXX            = $(TOOLCHAIN_BIN)clang++
+# CC             = clang
+# CXX            = clang++
+AS             = $(TOOLCHAIN_BIN)arm-none-eabi-as
+OBJCOPY        = $(TOOLCHAIN_BIN)llvm-objcopy
+DB             = $(TOOLCHAIN_BIN)arm-none-eabi-gdb
+OBJDUMP        = $(TOOLCHAIN_BIN)llvm-objdump
+AR             = $(TOOLCHAIN_BIN)arm-none-eabi-ar
+SIZE           = $(TOOLCHAIN_BIN)arm-none-eabi-size
+NM             = $(TOOLCHAIN_BIN)arm-none-eabi-nm
+
+else
+
+TOOLCHAIN_PATH ?= ~/Projects/toolchains/gcc-arm-none-eabi-9-2020-q2-update/
+BUILD_ROOT     = build-gcc/
 
 CC             = $(TOOLCHAIN_BIN)arm-none-eabi-gcc
 CXX            = $(TOOLCHAIN_BIN)arm-none-eabi-g++
@@ -63,6 +85,9 @@ OBJDUMP        = $(TOOLCHAIN_BIN)arm-none-eabi-objdump
 AR             = $(TOOLCHAIN_BIN)arm-none-eabi-ar
 SIZE           = $(TOOLCHAIN_BIN)arm-none-eabi-size
 NM             = $(TOOLCHAIN_BIN)arm-none-eabi-nm
+
+endif
+
 REMOVE         = rm -f
 CAT            = cat
 FORMAT_SIZE    = | figlet | cowsay -n -f moose
@@ -70,6 +95,10 @@ FORMAT_RAMSIZE = | figlet | cowsay -n -f small
 
 STM32LOADER_PATH = stmlib/programming/serial/
 OPENOCD_SCRIPTS_PATH = stmlib/programming/jtag/
+
+
+
+BUILD_DIR      = $(BUILD_ROOT)$(TARGET)/
 
 # ------------------------------------------------------------------------------
 # Files and directories for the user code
@@ -366,7 +395,7 @@ size: $(TARGET_SIZE)
 ramsize: $(TARGET_SIZE)
 	cat $(TARGET_SIZE) | awk '{ print $$2+$$3 }' | tail -n1 $(FORMAT_RAMSIZE)
 
-disassemble: build/$(TARGET)/$(TARGET).lss build/$(TARGET)/$(TARGET).top_symbols
+disassemble: $(BUILD_DIR)$(TARGET).lss $(BUILD_DIR)$(TARGET).top_symbols
 
 .PHONY: all bin clean depends resources
 
